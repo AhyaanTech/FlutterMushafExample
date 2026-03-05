@@ -1,0 +1,28 @@
+# AGENTS.md - Code Mode
+
+This file provides guidance to agents in CODE mode when working with this Flutter Mushaf app.
+
+## Project Coding Rules (Non-Obvious Only)
+
+### Database Access
+- **Always use the singleton factory**: `DatabaseHelper()` not `new DatabaseHelper()` - the private constructor exists but factory ensures single instance
+- **DB operations are async**: All methods in [`DatabaseHelper`](lib/services/database_helper.dart) return `Future<>` - must await or use `FutureBuilder`
+- **First launch copies DB**: Database is copied from `assets/db/quran_offline.db` to app documents on first run via `_copyDatabaseFromAssets()` - check this if "table not found" errors occur
+
+### State Management Patterns
+- **Word marking is in-memory only**: [`MushafScreen._markedWordIds`](lib/screens/mushaf_screen.dart:33) is a `Set<int>` - don't add persistence here without adding `shared_preferences` or `hive` dependency
+- **Prop drilling required**: Mark state flows `MushafScreen` → `MushafPageWidget` → `MushafLineWidget` → `MushafWordWidget` - no context-based state management
+- **Keys matter for word identity**: [`MushafWordWidget`](lib/widgets/mushaf_widgets.dart:7) relies on `word.id` for mark tracking - changing how `key` is assigned breaks mark state
+
+### RTL/Locale Handling
+- **Forced Arabic locale**: App uses `locale: const Locale('ar', 'SA')` - don't change this or text direction breaks
+- **Font fallback chain is critical**: The `fontFamilyFallback` in [`MushafWordWidget`](lib/widgets/mushaf_widgets.dart:35) must include `.SF Arabic` for macOS/iOS - without it, Arabic text shows as boxes
+- **PageView reverse for RTL**: [`reverse: true`](lib/screens/mushaf_screen.dart:191) makes left swipe go to "next" page (which is previous page number in RTL)
+
+### Legacy Code Traps
+- **Unused models exist**: `Surah`, `Ayah`, `Word` classes in [`quran_models.dart`](lib/models/quran_models.dart:132-225) are legacy - app uses `QuranWord`, `QuranLine`, `QuranPage`
+- **Legacy widgets are stubs**: `MushafPage`, `AyahWidget`, `WordWidget` classes in [`mushaf_widgets.dart`](lib/widgets/mushaf_widgets.dart:148-203) return empty `Container()` - don't use them
+
+### Testing
+- **No tests currently**: `flutter test` will pass with 0 tests - add tests in `test/` directory if needed
+- **Hot reload works**: Standard Flutter hot reload for UI changes, full restart needed for DB schema changes
