@@ -14,8 +14,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../widgets/mushaf_widgets.dart';
+import '../widgets/color_picker_dialog.dart';
 import '../services/database_helper.dart';
 import '../models/quran_models.dart';
+import '../models/tajweed_models.dart';
 
 /// Main screen for displaying the Mushaf with interactive word marking
 class MushafScreen extends StatefulWidget {
@@ -30,13 +32,23 @@ class _MushafScreenState extends State<MushafScreen> {
   final PageController _pageController = PageController();
 
   // Track marked words in-memory (persists while app is running)
+  // NOTE: This will be replaced by _customLetterColors in Phase 3
   final Set<int> _markedWordIds = <int>{};
+
+  // Custom letter colors: wordId -> list of colors per letter index
+  // Each index in the list corresponds to a letter in the word
+  // null means no custom color for that letter
+  final Map<int, List<Color?>> _customLetterColors = {};
 
   // Current page being displayed
   int _currentPage = 1;
 
   // Cache for loaded pages to avoid reloading
   final Map<int, QuranPage?> _pageCache = {};
+
+  // Rendering and color mode state
+  RenderingMode _renderingMode = RenderingMode.textspan;
+  ColorMode _colorMode = ColorMode.none;
 
   @override
   void initState() {
@@ -73,6 +85,155 @@ class _MushafScreenState extends State<MushafScreen> {
         duration: Duration(seconds: 2),
       ),
     );
+  }
+
+  // ============================================================
+  // Custom Letter Color Management (Phase 1 Implementation)
+  // ============================================================
+
+  /// Sets a custom color for a specific letter in a word
+  ///
+  /// Parameters:
+  /// - [wordId]: The unique ID of the word
+  /// - [letterIndex]: The index of the letter within the word (0-based)
+  /// - [color]: The color to apply to the letter
+  void setLetterColor(int wordId, int letterIndex, Color color) {
+    setState(() {
+      // Initialize the list if this word hasn't been colored yet
+      if (!_customLetterColors.containsKey(wordId)) {
+        _customLetterColors[wordId] = <Color?>[];
+      }
+
+      final letterColors = _customLetterColors[wordId]!;
+
+      // Extend the list if needed to accommodate the letter index
+      while (letterColors.length <= letterIndex) {
+        letterColors.add(null);
+      }
+
+      // Set the color for the specific letter
+      letterColors[letterIndex] = color;
+    });
+  }
+
+  /// Gets the custom color for a specific letter in a word
+  ///
+  /// Parameters:
+  /// - [wordId]: The unique ID of the word
+  /// - [letterIndex]: The index of the letter within the word (0-based)
+  ///
+  /// Returns the custom color if set, or null if no custom color is applied
+  Color? getLetterColor(int wordId, int letterIndex) {
+    final letterColors = _customLetterColors[wordId];
+    if (letterColors == null ||
+        letterIndex < 0 ||
+        letterIndex >= letterColors.length) {
+      return null;
+    }
+    return letterColors[letterIndex];
+  }
+
+  /// Gets all custom colors for a word
+  ///
+  /// Parameters:
+  /// - [wordId]: The unique ID of the word
+  ///
+  /// Returns a list of colors per letter index, or null if no custom colors are set
+  List<Color?>? getWordCustomColors(int wordId) {
+    return _customLetterColors[wordId];
+  }
+
+  /// Clears a specific letter's custom color
+  ///
+  /// Parameters:
+  /// - [wordId]: The unique ID of the word
+  /// - [letterIndex]: The index of the letter within the word (0-based)
+  void clearLetterColor(int wordId, int letterIndex) {
+    final letterColors = _customLetterColors[wordId];
+    if (letterColors != null &&
+        letterIndex >= 0 &&
+        letterIndex < letterColors.length) {
+      setState(() {
+        letterColors[letterIndex] = null;
+      });
+    }
+  }
+
+  /// Clears all custom colors for a specific word
+  ///
+  /// Parameters:
+  /// - [wordId]: The unique ID of the word
+  void clearWordCustomColors(int wordId) {
+    setState(() {
+      _customLetterColors.remove(wordId);
+    });
+  }
+
+  /// Clears all custom colors for all words
+  void clearAllCustomColors() {
+    setState(() {
+      _customLetterColors.clear();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content:
+            Text('تم مسح جميع الألوان المخصصة / All custom colors cleared'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  /// Checks if a word has any custom colors applied
+  ///
+  /// Parameters:
+  /// - [wordId]: The unique ID of the word
+  ///
+  /// Returns true if the word has at least one custom colored letter
+  bool hasCustomColors(int wordId) {
+    final letterColors = _customLetterColors[wordId];
+    if (letterColors == null) return false;
+    return letterColors.any((color) => color != null);
+  }
+
+  // ============================================================
+  // Letter Tap Handler for Custom Coloring (Phase 2 Implementation)
+  // ============================================================
+
+  /// Handles a letter tap event by showing the color picker dialog
+  ///
+  /// This method is called when a user taps a letter in custom color mode.
+  /// It displays a color picker dialog and applies the selected color
+  /// to the tapped letter.
+  ///
+  /// Parameters:
+  /// - [wordId]: The unique ID of the word containing the letter
+  /// - [letterIndex]: The index of the letter within the word (0-based)
+  Future<void> _onLetterTap(int wordId, int letterIndex) async {
+    // Get the current color for this letter (if any)
+    final currentColor = getLetterColor(wordId, letterIndex);
+
+    // Get the letter character for the preview
+    // Note: We'd need to fetch the word data to get the actual letter,
+    // but for now we'll use a placeholder
+    final letterChar = 'ح'; // Arabic letter Ha as placeholder
+
+    // Show the color picker dialog
+    final result = await showColorPickerDialog(
+      context: context,
+      letter: letterChar,
+      currentColor: currentColor,
+    );
+
+    // Handle the result
+    if (result != null) {
+      if (result.clearRequested) {
+        // Clear the color for this letter
+        clearLetterColor(wordId, letterIndex);
+      } else if (result.color != null) {
+        // Apply the selected color
+        setLetterColor(wordId, letterIndex, result.color!);
+      }
+    }
   }
 
   /// Get a Quran page (from cache or database)
@@ -171,12 +332,134 @@ class _MushafScreenState extends State<MushafScreen> {
         foregroundColor: Colors.black87,
         elevation: 1,
         actions: [
+          // Rendering mode toggle
+          PopupMenuButton<RenderingMode>(
+            icon: const Icon(Icons.compare),
+            tooltip: 'وضع العرض / Rendering mode',
+            onSelected: (mode) {
+              setState(() {
+                _renderingMode = mode;
+              });
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: RenderingMode.textspan,
+                child: Row(
+                  children: [
+                    Icon(
+                      _renderingMode == RenderingMode.textspan
+                          ? Icons.check_circle
+                          : Icons.circle_outlined,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('TextSpan (Flutter Text)'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: RenderingMode.glyph,
+                child: Row(
+                  children: [
+                    Icon(
+                      _renderingMode == RenderingMode.glyph
+                          ? Icons.check_circle
+                          : Icons.circle_outlined,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('Glyph (CustomPainter)'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          // Color mode selector
+          PopupMenuButton<ColorMode>(
+            icon: const Icon(Icons.color_lens),
+            tooltip: 'وضع الألوان / Color mode',
+            onSelected: (mode) {
+              setState(() {
+                _colorMode = mode;
+              });
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: ColorMode.none,
+                child: Row(
+                  children: [
+                    Icon(
+                      _colorMode == ColorMode.none
+                          ? Icons.check_circle
+                          : Icons.circle_outlined,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('Normal'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: ColorMode.tajweed,
+                child: Row(
+                  children: [
+                    Icon(
+                      _colorMode == ColorMode.tajweed
+                          ? Icons.check_circle
+                          : Icons.circle_outlined,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('Tajweed'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: ColorMode.mistakes,
+                child: Row(
+                  children: [
+                    Icon(
+                      _colorMode == ColorMode.mistakes
+                          ? Icons.check_circle
+                          : Icons.circle_outlined,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('Mistakes'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: ColorMode.custom,
+                child: Row(
+                  children: [
+                    Icon(
+                      _colorMode == ColorMode.custom
+                          ? Icons.check_circle
+                          : Icons.circle_outlined,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('Custom'),
+                  ],
+                ),
+              ),
+            ],
+          ),
           // Clear all marks button
           IconButton(
             icon: const Icon(Icons.clear_all),
             tooltip: 'مسح جميع العلامات / Clear all marks',
             onPressed: _markedWordIds.isEmpty ? null : _clearAllMarks,
           ),
+          // Clear all custom colors button (only visible in custom mode)
+          if (_colorMode == ColorMode.custom)
+            IconButton(
+              icon: const Icon(Icons.format_color_reset),
+              tooltip: 'مسح جميع الألوان المخصصة / Clear all custom colors',
+              onPressed:
+                  _customLetterColors.isEmpty ? null : clearAllCustomColors,
+            ),
           // Jump to page button
           IconButton(
             icon: const Icon(Icons.search),
@@ -239,6 +522,11 @@ class _MushafScreenState extends State<MushafScreen> {
                 page: page,
                 markedWordIds: _markedWordIds,
                 onWordTap: _toggleWordMark,
+                renderingMode: _renderingMode,
+                colorMode: _colorMode,
+                onLetterTap:
+                    _colorMode == ColorMode.custom ? _onLetterTap : null,
+                getCustomColors: getWordCustomColors,
               );
             },
           );

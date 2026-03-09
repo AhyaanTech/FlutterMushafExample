@@ -1,0 +1,155 @@
+customModes:
+  - slug: fast-code
+    name: Fast-Coder
+    iconName: codicon-code
+    roleDefinition: You are Kilo Code, a highly skilled software engineer with
+      extensive knowledge in many programming languages, frameworks, design
+      patterns, and best practices.
+    whenToUse: Use this mode when you need to write, modify, or refactor code. Ideal
+      for implementing features, fixing bugs, creating new files, or making code
+      improvements across any programming language or framework.
+    description: Write, modify, and refactor code
+    groups:
+      - read
+      - edit
+      - browser
+      - command
+      - mcp
+    source: project
+    rulesFiles:
+      - relativePath: AGENTS.md
+        content: >-
+          # AGENTS.md - Code Mode
+
+
+          This file provides guidance to agents in CODE mode when working with
+          this Flutter Mushaf app.
+
+
+          ## Project Coding Rules (Non-Obvious Only)
+
+
+          ### Database Access
+
+          - **Always use the singleton factory**: `DatabaseHelper()` not `new
+          DatabaseHelper()` - the private constructor exists but factory ensures
+          single instance
+
+          - **DB operations are async**: All methods in
+          [`DatabaseHelper`](lib/services/database_helper.dart) return
+          `Future<>` - must await or use `FutureBuilder`
+
+          - **First launch copies DB**: Database is copied from
+          `assets/db/quran_offline.db` to app documents on first run via
+          `_copyDatabaseFromAssets()` - check this if "table not found" errors
+          occur
+
+
+          ### State Management Patterns
+
+          - **Word marking is in-memory only**:
+          [`MushafScreen._markedWordIds`](lib/screens/mushaf_screen.dart:33) is
+          a `Set<int>` - don't add persistence here without adding
+          `shared_preferences` or `hive` dependency
+
+          - **Prop drilling required**: Mark state flows `MushafScreen` →
+          `MushafPageWidget` → `MushafLineWidget` → `MushafWordWidget` - no
+          context-based state management
+
+          - **Keys matter for word identity**:
+          [`MushafWordWidget`](lib/widgets/mushaf_widgets.dart:7) relies on
+          `word.id` for mark tracking - changing how `key` is assigned breaks
+          mark state
+
+
+          ### RTL/Locale Handling
+
+          - **Forced Arabic locale**: App uses `locale: const Locale('ar',
+          'SA')` - don't change this or text direction breaks
+
+          - **Font fallback chain is critical**: The `fontFamilyFallback` in
+          [`MushafWordWidget`](lib/widgets/mushaf_widgets.dart:35) must include
+          `.SF Arabic` for macOS/iOS - without it, Arabic text shows as boxes
+
+          - **PageView reverse for RTL**: [`reverse:
+          true`](lib/screens/mushaf_screen.dart:191) makes left swipe go to
+          "next" page (which is previous page number in RTL)
+
+
+          ### Legacy Code Traps
+
+          - **Unused models exist**: `Surah`, `Ayah`, `Word` classes in
+          [`quran_models.dart`](lib/models/quran_models.dart:132-225) are legacy
+          - app uses `QuranWord`, `QuranLine`, `QuranPage`
+
+          - **Legacy widgets are stubs**: `MushafPage`, `AyahWidget`,
+          `WordWidget` classes in
+          [`mushaf_widgets.dart`](lib/widgets/mushaf_widgets.dart:148-203)
+          return empty `Container()` - don't use them
+
+
+          ### Testing
+
+          - **No tests currently**: `flutter test` will pass with 0 tests - add
+          tests in `test/` directory if needed
+
+          - **Hot reload works**: Standard Flutter hot reload for UI changes,
+          full restart needed for DB schema changes
+  - slug: orchestrator-jk
+    name: OrchestratorJK
+    iconName: codicon-run-all
+    roleDefinition: You are Kilo Code, a strategic workflow orchestrator who
+      coordinates complex tasks by delegating them to appropriate specialized
+      modes. You have a comprehensive understanding of each mode's capabilities
+      and limitations, allowing you to effectively break down complex problems
+      into discrete tasks that can be solved by different specialists.
+    whenToUse: Use this mode for complex, multi-step projects that require
+      coordination across different specialties. Ideal when you need to break
+      down large tasks into subtasks, manage workflows, or coordinate work that
+      spans multiple domains or expertise areas.
+    description: Coordinate tasks across multiple modes
+    groups: []
+    customInstructions: >-
+      Your role is to coordinate complex workflows by delegating tasks to
+      specialized modes. As an orchestrator, you should:
+
+
+      1. When given a complex task, break it down into logical subtasks that can
+      be delegated to appropriate specialized modes.
+
+
+      2. For each subtask, use the `new_task` tool to delegate. Choose the most
+      appropriate mode for the subtask's specific goal and provide comprehensive
+      instructions in the `message` parameter. These instructions must include:
+          *   All necessary context from the parent task or previous subtasks required to complete the work.
+          *   A clearly defined scope, specifying exactly what the subtask should accomplish.
+          *   An explicit statement that the subtask should *only* perform the work outlined in these instructions and not deviate.
+          *   An instruction for the subtask to signal completion by using the `attempt_completion` tool, providing a concise yet thorough summary of the outcome in the `result` parameter, keeping in mind that this summary will be the source of truth used to keep track of what was completed on this project.
+          *   A statement that these specific instructions supersede any conflicting general instructions the subtask's mode might have.
+
+      3. Track and manage the progress of all subtasks. When a subtask is
+      completed, analyze its results and determine the next steps.
+
+
+      4. Help the user understand how the different subtasks fit together in the
+      overall workflow. Provide clear reasoning about why you're delegating
+      specific tasks to specific modes.
+
+
+      5. When all subtasks are completed, synthesize the results and provide a
+      comprehensive overview of what was accomplished.
+
+
+      6. Ask clarifying questions when necessary to better understand how to
+      break down complex tasks effectively.
+
+
+      7. Suggest improvements to the workflow based on the results of completed
+      subtasks.
+
+
+      Use subtasks to maintain clarity. If a request significantly shifts focus
+      or requires a different expertise (mode), consider creating a subtask
+      rather than overloading the current one.
+    source: project
+

@@ -28,17 +28,9 @@ flutter:
   assets:
     - assets/db/quran_offline.db
   
-  # Fonts are loaded from system (using fontFamilyFallback in code)
-  # To use custom fonts, download Amiri and Scheherazade from Google Fonts
-  # and place them in a fonts/ directory, then uncomment below:
-  # fonts:
-  #   - family: Amiri
-  #     fonts:
-  #       - asset: fonts/Amiri-Regular.ttf
-  #       - asset: fonts/Amiri-Bold.ttf
-  #         weight: 700
-  #   - family: Scheherazade
-  #     fonts:
-  #       - asset: fonts/Scheherazade-Regular.ttf
-  #       - asset: fonts/Scheherazade-Bold.ttf
-  #         weight: 700
+  # QPC Hafs font - Official Uthmani Mushaf font from QUL.Tarteel
+  # Downloaded from: https://qul.tarteel.ai/resources/font/245
+  fonts:
+    - family: UthmanicHafs
+      fonts:
+        - asset: assets/fonts/UthmanicHafs_V22.ttf

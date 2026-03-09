@@ -3,7 +3,7 @@
 This file provides guidance to agents when working with code in this repository.
 
 ## Project Overview
-Interactive offline Mushaf (Quran) Flutter app with 15-line layout and tap-to-mark words for memorization.
+Interactive offline Mushaf (Quran) Flutter app with 15-line layout and tap-to-mark words for memorization. Features letter-by-letter custom coloring for Tajweed study and memorization assistance.
 
 ## Build/Run Commands
 - `flutter pub get` - Install dependencies
@@ -35,8 +35,19 @@ App forces RTL locale via `locale: const Locale('ar', 'SA')` in [`main.dart`](li
 
 ### State Management
 - **In-memory only**: [`MushafScreen._markedWordIds`](lib/screens/mushaf_screen.dart:33) is `Set<int>` - marks reset on app restart
-- **Prop drilling**: Word mark state passed down: `MushafScreen` → `MushafPageWidget` → `MushafLineWidget` → `MushafWordWidget`
+- **Prop drilling**: Word mark state passed down: `MushafScreen` → `MushafPageWidget` → `MushafLineWidget` → `MushafWordFactory` → (`MushafWordTextSpan` or `MushafWordGlyph`)
 - **PageView reverse**: `reverse: true` in [`PageView.builder`](lib/screens/mushaf_screen.dart:191) for RTL swipe direction (left = next page)
+
+### Letter-by-Letter Custom Coloring
+- **ColorMode enum**: Four modes in [`tajweed_models.dart`](lib/models/tajweed_models.dart:10): `none`, `tajweed`, `mistakes`, `custom`
+- **CustomLetterColor model**: Tracks `wordId`, `letterIndex`, and `color` at [`tajweed_models.dart:217`](lib/models/tajweed_models.dart:217)
+- **Custom color state**: [`MushafScreen._customLetterColors`](lib/screens/mushaf_screen.dart:41) is `Map<int, List<Color?>>` - keyed by word ID
+- **Color picker dialog**: [`ColorPickerDialog`](lib/widgets/color_picker_dialog.dart) provides predefined Tajweed colors and custom picker
+- **Rendering modes**: 
+  - TextSpan mode ([`MushafWordTextSpan`](lib/widgets/mushaf_word_textspan.dart)): Full letter-level tap detection and coloring
+  - Glyph mode ([`MushafWordGlyph`](lib/widgets/mushaf_word_glyph.dart)): Limited custom color support, word-level tap only
+- **Factory pattern**: [`MushafWordFactory`](lib/widgets/mushaf_word_factory.dart) switches between rendering modes
+- **Usage**: Select "Custom" from color mode dropdown, tap individual letters to apply colors
 
 ### Database Schema (mushaf_pages table)
 | Column | Notes |
