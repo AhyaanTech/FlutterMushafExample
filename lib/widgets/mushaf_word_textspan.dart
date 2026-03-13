@@ -165,11 +165,11 @@ class _MushafWordTextSpanState extends State<MushafWordTextSpan> {
       letterSpans.add(WidgetSpan(
         alignment: PlaceholderAlignment.middle,
         child: GestureDetector(
-          onTap: () => widget.onLetterTap?.call(widget.word.id, i),
+          onTapDown: (_) => widget.onLetterTap?.call(widget.word.id, i),
           behavior: HitTestBehavior.opaque,
           child: Container(
-            // Small padding for easier tapping
-            padding: const EdgeInsets.symmetric(horizontal: 1.0),
+            // Increased padding for easier clicking on desktop
+            padding: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 1.0),
             child: Text(
               letter.char,
               style: TextStyle(

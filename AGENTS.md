@@ -59,10 +59,47 @@ App forces RTL locale via `locale: const Locale('ar', 'SA')` in [`main.dart`](li
 | line_type | Enum: 'surah_name', 'basmallah', 'ayah' |
 | is_centered | 1 for surah names/basmallah, 0 for ayah text |
 
+### Letter Breakdown Table (letter_breakdown)
+Character-level segmentation table for Quranic text analysis with diacritical metadata.
+
+| Column | Notes |
+|--------|-------|
+| word_id | Foreign key to mushaf_pages.word_id |
+| verse_key | Format "surah:ayah" (e.g., "1:1") |
+| letter_index | Position within word (0-based, RTL) |
+| base_letter | Arabic letter without diacritics |
+| letter_with_diacritics | Full letter with tashkeel |
+| diacritics_json | JSON array of diacritic objects |
+| has_fatha/kasra/damma/sukun/shadda | Boolean flags for quick filtering |
+| has_tanwin_* | Boolean flags for tanwin types |
+| has_maddah/hamza_* | Boolean flags for special marks |
+| has_superscript/subscript_alef | Boolean flags for Uthmani script |
+| letter_type | 'consonant', 'vowelCarrier', 'longVowel' |
+
+**Statistics**: ~341,062 letters across 83,668 words (avg 4.1 letters/word)
+
+**Dart Model**: [`QuranLetter`](lib/models/quran_letter_models.dart:67) - Full letter data with diacritics
+
+**Usage Examples**:
+```sql
+-- Get letters of a specific word
+SELECT * FROM letter_breakdown WHERE word_id = 123 ORDER BY letter_index;
+
+-- Find all words with shadda
+SELECT DISTINCT word_id FROM letter_breakdown WHERE has_shadda = 1;
+
+-- Count fatha occurrences by letter
+SELECT base_letter, COUNT(*) FROM letter_breakdown WHERE has_fatha = 1 GROUP BY base_letter;
+```
+
 ### Code Generation/Rebuild
 To rebuild the SQLite database from source:
 ```bash
+# Merge base databases
 python scripts/merge_quran_dbs.py
+
+# Generate letter breakdown table
+python scripts/generate_letter_breakdown.py
 ```
 Requires: `qpc-hafs-word-by-word.db` and `qudratullah-indopak-15-lines.db` in project root.
 
@@ -72,3 +109,60 @@ Requires: `qpc-hafs-word-by-word.db` and `qudratullah-indopak-15-lines.db` in pr
 3. **Widget key handling**: Each word widget gets unique identity via `word.id` - changing this breaks mark state tracking
 4. **Database path**: Uses `getApplicationDocumentsDirectory()` - different path per platform
 5. **Total pages hardcoded**: 604 pages in [`PageView.builder`](lib/screens/mushaf_screen.dart:192), but DB has 610 - mismatch intentional for common Mushaf layout
+
+## External Resources & APIs
+
+### QUL (Quranic Universal Library) - Tarteel
+[QUL](https://qul.tarteel.io) is an open-source platform by Tarteel that centralizes high-quality Quranic resources for developers. It provides standardized Quranic text, translations, tafsir, recitations, and Mushaf layouts.
+
+**Relevance to Letter Breakdown**:
+- Uses same `verse_key` format (surah:ayah) for verse identification
+- Provides word-by-word alignment data compatible with this schema
+- Morphological annotations can be cross-referenced with letter positions
+
+### PyArabic Library
+[PyArabic](https://pypi.org/project/PyArabic/) is a Python library for Arabic text processing that can supplement the letter breakdown data.
+
+```bash
+pip install pyarabic
+```
+
+**Useful Functions**:
+- `araby.strip_diacritics(text)` - Remove tashkeel to get base text
+- `araby.separate_diacritics(text)` - Separate letters from diacritics
+- `araby.is_arabicletter(char)` - Check if character is Arabic letter
+
+### Unicode Arabic Blocks
+- **Arabic**: U+0600 - U+06FF (Base Arabic letters and diacritics)
+- **Arabic Supplement**: U+0750 - U+077F (Extended Arabic letters)
+- **Arabic Extended-A**: U+08A0 - U+08FF (Additional Quranic characters)
+
+### Related Data Sources
+1. **Quran Complexity Project**: Character-level linguistic analysis
+2. ** Tanzil Quran Text**: Uthmani script standard reference
+3. **King Fahd Quran Complex**: Official Mushaf fonts and layouts
+
+## TextSpan Rendering Approach
+
+The letter breakdown table is designed to work with Flutter's TextSpan rendering:
+
+```dart
+// Example: Build colored TextSpans from letter data
+List<TextSpan> buildLetterSpans(List<QuranLetter> letters) {
+  return letters.map((letter) => TextSpan(
+    text: letter.phonetic,
+    style: TextStyle(
+      color: getTajweedColor(letter), // Color based on diacritics
+      fontFamily: 'Scheherazade',
+    ),
+    recognizer: TapGestureRecognizer()
+      ..onTap = () => onLetterTapped(letter),
+  )).toList();
+}
+
+Color getTajweedColor(QuranLetter letter) {
+  if (letter.hasShadda) return Colors.red;
+  if (letter.hasMaddah) return Colors.blue;
+  return Colors.black;
+}
+```

@@ -234,7 +234,7 @@ class _MushafWordGlyphState extends State<MushafWordGlyph> {
         widget.onLetterTap != null) {
       // Apply custom colors to glyphs, with word-level tap interaction
       return GestureDetector(
-        onTap: () {
+        onTapDown: (_) {
           // Show snackbar about limited glyph mode support
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -243,7 +243,7 @@ class _MushafWordGlyphState extends State<MushafWordGlyph> {
               duration: Duration(seconds: 2),
             ),
           );
-          widget.onTap();
+          widget.onTap?.call();
         },
         child: _buildGlyphPaint(glyphs),
       );
