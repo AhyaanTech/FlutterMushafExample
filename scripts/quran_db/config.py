@@ -12,8 +12,8 @@ OUTPUT_DB = DB_DIR / "quran_offline.db"
 
 # Source databases
 DB_WORDS = PROJECT_ROOT / "qpc-hafs-word-by-word.db"
-DB_LAYOUT = PROJECT_ROOT / "qudratullah-indopak-15-lines.db"
-DB_QPC_V4 = PROJECT_ROOT / "qpc-v4.db"  # Currently unused (redundant)
+DB_LAYOUT = PROJECT_ROOT / "digital-khatt-15-lines.db"  # KFGQPC V2 15-line layout (Uthmani/Madani)
+DB_TAJWEED = PROJECT_ROOT / "qpc-hafs-tajweed-word.db"  # Official Tajweed colors
 
 # Schema constants
 TOTAL_PAGES = 610
@@ -22,6 +22,7 @@ TOTAL_SURAHS = 114
 
 # Table names
 TABLE_WORDS = "words"
+TABLE_WORDS_TAJWEED = "words_tajweed"  # Official Tajweed colors
 TABLE_AYAHS = "ayahs"
 TABLE_SURAHS = "surahs"
 TABLE_MUSHAF_PAGES = "mushaf_pages"

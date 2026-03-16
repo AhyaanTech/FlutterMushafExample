@@ -11,7 +11,7 @@ from .database import (
 )
 from .builders import TableBuilder
 from .validators import DatabaseValidator
-from .config import DB_WORDS, DB_LAYOUT, OUTPUT_DB
+from .config import DB_WORDS, DB_LAYOUT, DB_TAJWEED, OUTPUT_DB
 
 
 def build_database() -> bool:
@@ -20,12 +20,18 @@ def build_database() -> bool:
     print("Quran Database Builder v2.0")
     print("=" * 60)
     
-    # Validate sources
+    # Validate sources (Tajweed is optional)
     try:
         validate_source_db(DB_WORDS, "Words")
         validate_source_db(DB_LAYOUT, "Layout")
         print(f"[OK] Found words DB: {DB_WORDS}")
         print(f"[OK] Found layout DB: {DB_LAYOUT}")
+        
+        if DB_TAJWEED.exists():
+            print(f"[OK] Found Tajweed DB: {DB_TAJWEED}")
+        else:
+            print(f"[WARN] Tajweed DB not found: {DB_TAJWEED}")
+            print(f"       Download it to enable Tajweed mode")
     except FileNotFoundError as e:
         print(f"[ERR] {e}")
         return False

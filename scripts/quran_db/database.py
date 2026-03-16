@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Optional
 from contextlib import contextmanager
 
-from .config import DB_DIR, OUTPUT_DB
+from .config import DB_DIR, OUTPUT_DB, DB_TAJWEED
 
 
 def ensure_directories() -> None:
@@ -55,10 +55,13 @@ def init_output_db() -> None:
 
 def attach_source_databases(conn: sqlite3.Connection) -> None:
     """Attach source databases to connection."""
-    from .config import DB_WORDS, DB_LAYOUT
+    from .config import DB_WORDS, DB_LAYOUT, DB_TAJWEED
     cursor = conn.cursor()
     cursor.execute(f"ATTACH DATABASE ? AS words_db", (str(DB_WORDS),))
     cursor.execute(f"ATTACH DATABASE ? AS layout_db", (str(DB_LAYOUT),))
+    # Tajweed database is optional
+    if DB_TAJWEED.exists():
+        cursor.execute(f"ATTACH DATABASE ? AS tajweed_db", (str(DB_TAJWEED),))
 
 
 def get_table_count(conn: sqlite3.Connection, table: str) -> int:

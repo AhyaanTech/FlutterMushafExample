@@ -102,28 +102,31 @@ class TableBuilder:
             CREATE INDEX idx_{TABLE_AYAHS}_surah ON {TABLE_AYAHS}(surah);
         """)
         self.cursor.execute(f"""
+            CREATE INDEX idx_{TABLE_AYAHS}_juz ON {TABLE_AYAHS}(juz);
+        """)
+        self.cursor.execute(f"""
             CREATE INDEX idx_{TABLE_AYAHS}_page ON {TABLE_AYAHS}(page);
         """)
         
-        # Derive from words table
+        # Derive from words table (no ayah text - build from words when needed)
         self.cursor.execute(f"""
             INSERT INTO {TABLE_AYAHS} (verse_key, surah, ayah, first_word_id, last_word_id, word_count)
             SELECT 
-                verse_key,
-                surah,
-                ayah,
-                MIN(id) as first_word_id,
-                MAX(id) as last_word_id,
+                w.verse_key,
+                w.surah,
+                w.ayah,
+                MIN(w.id) as first_word_id,
+                MAX(w.id) as last_word_id,
                 COUNT(*) as word_count
-            FROM {TABLE_WORDS}
-            GROUP BY surah, ayah
-            ORDER BY surah, ayah;
+            FROM {TABLE_WORDS} w
+            GROUP BY w.surah, w.ayah
+            ORDER BY w.surah, w.ayah;
         """)
         
         count = self.cursor.rowcount
         self.stats[TABLE_AYAHS] = count
         print(f"    [OK] {count:,} ayahs")
-        print(f"    [NOTE] Populate juz, hizb, sajda markers from external source")
+        print(f"    [NOTE] Ayah text built from words; populate juz, hizb, sajda markers from external source")
     
     def _build_surahs_table(self) -> None:
         """Build surahs table - chapter metadata (placeholder)."""
@@ -143,6 +146,10 @@ class TableBuilder:
                 last_word_id INTEGER,
                 bismillah_pre TEXT
             );
+        """)
+        
+        self.cursor.execute(f"""
+            CREATE INDEX idx_{TABLE_SURAHS}_revelation ON {TABLE_SURAHS}(revelation_type);
         """)
         
         # Create placeholder entries from ayah data
