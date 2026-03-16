@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import '../models/quran_models.dart';
 import '../models/tajweed_models.dart';
+import '../models/quran_letter_models.dart' as letter_models;
 
 /// Database helper class for managing SQLite database operations
 /// Uses singleton pattern for single database instance across the app
@@ -240,7 +241,7 @@ class DatabaseHelper {
   }
 
   /// Get letter-level data for a specific word (TextSpan approach)
-  /// Queries the experimental `word_letters` table from V4 tajweed DB
+  /// Queries the `letter_breakdown` table built by build_letters.py
   /// Returns null if table doesn't exist or no data found
   Future<WordLetterData?> getWordLetterData(int wordId) async {
     // Check cache first
@@ -251,14 +252,14 @@ class DatabaseHelper {
     try {
       final db = await database;
 
-      // Check if table exists (graceful fallback for non-V4 databases)
-      if (!await _tableExists(db, 'word_letters')) {
+      // Check if table exists (graceful fallback)
+      if (!await _tableExists(db, 'letter_breakdown')) {
         return null;
       }
 
-      // Query letter data for this word
+      // Query letter data for this word from letter_breakdown table
       final results = await db.query(
-        'word_letters',
+        'letter_breakdown',
         where: 'word_id = ?',
         whereArgs: [wordId],
         orderBy: 'letter_index ASC',
@@ -268,8 +269,15 @@ class DatabaseHelper {
         return null;
       }
 
-      // Convert to LetterData objects
-      final letters = results.map((row) => LetterData.fromDb(row)).toList();
+      // Convert to QuranLetter objects, then to LetterData for compatibility
+      final letters = results.map((row) {
+        final quranLetter = letter_models.QuranLetter.fromDb(row);
+        // Convert QuranLetter to LetterData for the existing widget interface
+        return LetterData(
+          char: quranLetter.letterWithDiacritics ?? quranLetter.baseLetter,
+          tajweedRule: _inferTajweedRule(quranLetter),
+        );
+      }).toList();
 
       // Create WordLetterData
       final wordLetterData = WordLetterData(
@@ -286,6 +294,15 @@ class DatabaseHelper {
       print('Error fetching letter data for word $wordId: $e');
       return null;
     }
+  }
+
+  /// Infer Tajweed rule from letter diacritics (simplified)
+  /// This is a fallback when words_tajweed table is not available
+  String _inferTajweedRule(letter_models.QuranLetter letter) {
+    if (letter.hasMaddah) return 'madda_normal';
+    if (letter.hasShadda) return 'ghunnah';
+    if (letter.hasSukun) return 'silent';
+    return 'normal';
   }
 
   /// Get glyph data for a specific word (Glyph/CustomPainter approach)

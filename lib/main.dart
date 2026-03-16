@@ -19,6 +19,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'dart:io';
 import 'screens/mushaf_screen.dart';
 import 'services/database_helper.dart';
 
@@ -27,6 +29,13 @@ import 'services/database_helper.dart';
 /// Ensures Flutter bindings are initialized before running the app.
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize sqflite_common_ffi for desktop platforms
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
+  
   runApp(const MushafApp());
 }
 
