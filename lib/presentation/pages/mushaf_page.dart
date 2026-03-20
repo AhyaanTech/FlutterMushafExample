@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import '../providers/mushaf_provider.dart';
 import '../providers/color_provider.dart';
 import '../../models/quran_word.dart';
-import '../widgets/mushaf_line_widget.dart';
 import '../widgets/letter_picker_dialog.dart';
+import '../widgets/mushaf_page_view.dart';
 
 class MushafPage extends StatelessWidget {
   const MushafPage({super.key});
@@ -83,19 +83,20 @@ class _MushafPageContent extends StatelessWidget {
                   itemCount: 604,
                   itemBuilder: (context, index) {
                     final pageNum = index + 1;
-                    // Only build current page
-                    if (pageNum != mushafProvider.currentPage) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
                     
-                    // Wrap with Consumer to rebuild when colors change
+                    // Each page loads its own data
                     return Consumer<ColorProvider>(
                       builder: (context, colorProvider, child) {
-                        return _buildPageContent(
-                          context,
-                          page,
-                          colorProvider.letterColors,
-                          colorProvider,
+                        return MushafPageView(
+                          pageNumber: pageNum,
+                          letterColors: colorProvider.letterColors,
+                          onWordTap: (word) {
+                            _showLetterPicker(
+                              context,
+                              word,
+                              colorProvider,
+                            );
+                          },
                         );
                       },
                     );
@@ -106,31 +107,6 @@ class _MushafPageContent extends StatelessWidget {
             ],
           );
         },
-      ),
-    );
-  }
-  
-  Widget _buildPageContent(
-    BuildContext context,
-    var page,
-    Map<String, Color> letterColors,
-    ColorProvider colorProvider,
-  ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: page.lines.map<Widget>((line) => MushafLineWidget(
-          line: line,
-          letterColors: letterColors,
-          onWordTap: (word) {
-            _showLetterPicker(
-              context,
-              word,
-              colorProvider,
-            );
-          },
-        )).toList(),
       ),
     );
   }

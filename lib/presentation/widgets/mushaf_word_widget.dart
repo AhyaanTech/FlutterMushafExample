@@ -16,9 +16,7 @@ class MushafWordWidget extends StatelessWidget {
   
   Color? _getLetterColor(int letterIndex) {
     final key = '${word.id}_$letterIndex';
-    final color = letterColors[key];
-    print('Getting color for word ${word.id}, letter $letterIndex: key=$key, color=$color');
-    return color;
+    return letterColors[key];
   }
   
   String _getLetterText(QuranLetter letter, bool isFirst, bool isLast) {
