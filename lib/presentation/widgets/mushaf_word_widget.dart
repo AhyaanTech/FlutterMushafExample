@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import '../../models/quran_word.dart';
 import '../../models/quran_letter.dart';
+import '../providers/color_provider.dart';
 
 class MushafWordWidget extends StatelessWidget {
   final QuranWord word;
   final Map<String, Color> letterColors;
   final VoidCallback? onTap;
+  final QuranFont font;
   
   const MushafWordWidget({
     super.key,
     required this.word,
     required this.letterColors,
     this.onTap,
+    this.font = QuranFont.uthmanicHafs,
   });
   
   Color? _getLetterColor(int letterIndex) {
@@ -34,11 +37,11 @@ class MushafWordWidget extends StatelessWidget {
         onTap: onTap,
         child: Text(
           word.text,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 22,
-            fontFamily: 'UthmanicHafs',
-            fontFamilyFallback: ['.SF Arabic', 'Roboto', 'Arial'],
-            color: Color(0xFF1A1A1A),
+            fontFamily: font.family,
+            fontFamilyFallback: const ['.SF Arabic', 'Roboto', 'Arial'],
+            color: const Color(0xFF1A1A1A),
           ),
         ),
       );
@@ -72,7 +75,7 @@ class MushafWordWidget extends StatelessWidget {
           text: text,
           style: TextStyle(
             fontSize: 22,
-            fontFamily: 'UthmanicHafs',
+            fontFamily: font.family,
             fontFamilyFallback: const [
               '.SF Arabic',
               'Roboto',

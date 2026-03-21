@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/quran_page.dart';
 import '../../services/page_repository.dart';
+import '../providers/color_provider.dart';
 import 'mushaf_line_widget.dart';
 import '../../models/quran_word.dart';
 
@@ -8,12 +9,14 @@ class MushafPageView extends StatefulWidget {
   final int pageNumber;
   final Map<String, Color> letterColors;
   final Function(QuranWord word)? onWordTap;
-  
+  final QuranFont font;
+
   const MushafPageView({
     super.key,
     required this.pageNumber,
     required this.letterColors,
     this.onWordTap,
+    this.font = QuranFont.uthmanicHafs,
   });
   
   @override
@@ -99,6 +102,7 @@ class _MushafPageViewState extends State<MushafPageView> {
           line: line,
           letterColors: widget.letterColors,
           onWordTap: widget.onWordTap,
+          font: widget.font,
         )).toList(),
       ),
     );

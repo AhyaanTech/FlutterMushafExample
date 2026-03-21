@@ -33,6 +33,17 @@ class _MushafPageContent extends StatelessWidget {
         backgroundColor: const Color(0xFFFDFCF8),
         elevation: 0,
         actions: [
+          Builder(
+            builder: (context) {
+              return IconButton(
+                icon: const Icon(Icons.font_download),
+                onPressed: () {
+                  _showFontPicker(context, context.read<ColorProvider>());
+                },
+                tooltip: 'Change font',
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.clear_all),
             onPressed: () {
@@ -90,6 +101,7 @@ class _MushafPageContent extends StatelessWidget {
                         return MushafPageView(
                           pageNumber: pageNum,
                           letterColors: colorProvider.letterColors,
+                          font: colorProvider.selectedFont,
                           onWordTap: (word) {
                             _showLetterPicker(
                               context,
@@ -111,6 +123,35 @@ class _MushafPageContent extends StatelessWidget {
     );
   }
   
+  void _showFontPicker(BuildContext context, ColorProvider colorProvider) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Font'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: QuranFont.values.map((font) => ListTile(
+            title: Text(font.displayName),
+            leading: Radio<QuranFont>(
+              value: font,
+              groupValue: colorProvider.selectedFont,
+              onChanged: (value) {
+                if (value != null) {
+                  colorProvider.setFont(value);
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+            onTap: () {
+              colorProvider.setFont(font);
+              Navigator.of(context).pop();
+            },
+          )).toList(),
+        ),
+      ),
+    );
+  }
+
   void _showLetterPicker(
     BuildContext context,
     QuranWord word,

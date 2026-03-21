@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
 import '../../models/quran_line.dart';
 import '../../models/quran_word.dart';
+import '../providers/color_provider.dart';
 import 'mushaf_word_widget.dart';
 
 class MushafLineWidget extends StatelessWidget {
   final QuranLine line;
   final Map<String, Color> letterColors;
   final Function(QuranWord word)? onWordTap;
+  final QuranFont font;
   
   const MushafLineWidget({
     super.key,
     required this.line,
     required this.letterColors,
     this.onWordTap,
+    this.font = QuranFont.uthmanicHafs,
   });
   
   @override
@@ -38,11 +41,12 @@ class MushafLineWidget extends StatelessWidget {
           word: word,
           letterColors: letterColors,
           onTap: onWordTap != null ? () => onWordTap!(word) : null,
+          font: font,
         ),
       )).toList(),
     );
   }
-  
+
   Widget _buildJustifiedLine() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -53,6 +57,7 @@ class MushafLineWidget extends StatelessWidget {
             word: word,
             letterColors: letterColors,
             onTap: onWordTap != null ? () => onWordTap!(word) : null,
+            font: font,
           ),
         )),
       ],
