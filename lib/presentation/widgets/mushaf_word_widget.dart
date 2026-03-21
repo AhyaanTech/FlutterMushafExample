@@ -38,10 +38,10 @@ class MushafWordWidget extends StatelessWidget {
         child: Text(
           word.text,
           style: TextStyle(
-            fontSize: 22,
+            fontSize: 28, // Increased from 22 for better readability
             fontFamily: font.family,
             fontFamilyFallback: const ['.SF Arabic', 'Roboto', 'Arial'],
-            color: const Color(0xFF1A1A1A),
+            color: const Color(0xFF1E1E1E), // Slightly warmer black
           ),
         ),
       );
@@ -74,14 +74,15 @@ class MushafWordWidget extends StatelessWidget {
         TextSpan(
           text: text,
           style: TextStyle(
-            fontSize: 22,
+            fontSize: 28, // Increased from 22 for better readability
+            height: 1.5, // Better vertical spacing for diacritics
             fontFamily: font.family,
             fontFamilyFallback: const [
               '.SF Arabic',
               'Roboto',
               'Arial',
             ],
-            color: color ?? const Color(0xFF1A1A1A),
+            color: color ?? const Color(0xFF1E1E1E),
           ),
         ),
       );

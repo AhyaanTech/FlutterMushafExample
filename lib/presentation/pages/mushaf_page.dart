@@ -26,12 +26,17 @@ class _MushafPageContent extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
+    const paperColor = Color(0xFFFDF6E3);
+    const borderColor = Color(0xFFD4C5A0);
+    
     return Scaffold(
-      backgroundColor: const Color(0xFFFDFCF8),
+      backgroundColor: const Color(0xFFF4F0E6), // A slightly darker shade outside the page
       appBar: AppBar(
-        title: const Text('Mushaf'),
-        backgroundColor: const Color(0xFFFDFCF8),
-        elevation: 0,
+        title: const Text('Mushaf', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
+        backgroundColor: paperColor,
+        elevation: 1,
+        shadowColor: Colors.black12,
+        iconTheme: const IconThemeData(color: Colors.black87),
         actions: [
           Builder(
             builder: (context) {
@@ -98,24 +103,60 @@ class _MushafPageContent extends StatelessWidget {
                     // Each page loads its own data
                     return Consumer<ColorProvider>(
                       builder: (context, colorProvider, child) {
-                        return MushafPageView(
-                          pageNumber: pageNum,
-                          letterColors: colorProvider.letterColors,
-                          font: colorProvider.selectedFont,
-                          onWordTap: (word) {
-                            _showLetterPicker(
-                              context,
-                              word,
-                              colorProvider,
-                            );
-                          },
+                        return Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: paperColor,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withAlpha(25),
+                                blurRadius: 15,
+                                spreadRadius: 2,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          // The classic geometric triple-border
+                          child: Container(
+                            margin: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: borderColor, width: 2.5),
+                            ),
+                            child: Container(
+                              margin: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: borderColor, width: 0.8),
+                              ),
+                              child: Container(
+                                margin: const EdgeInsets.all(2),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: borderColor, width: 0.8),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                                  child: MushafPageView(
+                                    pageNumber: pageNum,
+                                    letterColors: colorProvider.letterColors,
+                                    font: colorProvider.selectedFont,
+                                    onWordTap: (word) {
+                                      _showLetterPicker(
+                                        context,
+                                        word,
+                                        colorProvider,
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
                         );
                       },
                     );
                   },
                 ),
               ),
-              _buildPageNavigation(context, mushafProvider),
+              _buildPageNavigation(context, mushafProvider, paperColor),
             ],
           );
         },
@@ -172,11 +213,11 @@ class _MushafPageContent extends StatelessWidget {
     );
   }
   
-  Widget _buildPageNavigation(BuildContext context, MushafProvider provider) {
+  Widget _buildPageNavigation(BuildContext context, MushafProvider provider, Color paperColor) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFDFCF8),
+        color: paperColor,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withAlpha(26),
