@@ -21,8 +21,39 @@ class MushafPage extends StatelessWidget {
   }
 }
 
-class _MushafPageContent extends StatelessWidget {
+class _MushafPageContent extends StatefulWidget {
   const _MushafPageContent();
+  
+  @override
+  State<_MushafPageContent> createState() => _MushafPageContentState();
+}
+
+class _MushafPageContentState extends State<_MushafPageContent> {
+  late PageController _pageController;
+  
+  @override
+  void initState() {
+    super.initState();
+    final initialPage = context.read<MushafProvider>().currentPage - 1;
+    _pageController = PageController(initialPage: initialPage);
+  }
+  
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+  
+  void _syncControllerWithProvider(int page) {
+    if (_pageController.hasClients && 
+        _pageController.page?.round() != page - 1) {
+      _pageController.animateToPage(
+        page - 1,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
   
   @override
   Widget build(BuildContext context) {
@@ -30,7 +61,7 @@ class _MushafPageContent extends StatelessWidget {
     const borderColor = Color(0xFFD4C5A0);
     
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F0E6), // A slightly darker shade outside the page
+      backgroundColor: const Color(0xFFF4F0E6),
       appBar: AppBar(
         title: const Text('Mushaf', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
         backgroundColor: paperColor,
@@ -60,39 +91,16 @@ class _MushafPageContent extends StatelessWidget {
       ),
       body: Consumer2<MushafProvider, ColorProvider>(
         builder: (context, mushafProvider, colorProvider, child) {
-          if (mushafProvider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          
-          if (mushafProvider.error != null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Error: ${mushafProvider.error}'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => mushafProvider.loadPage(mushafProvider.currentPage),
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
-          
-          final page = mushafProvider.currentPageData;
-          if (page == null) {
-            return const Center(child: Text('No page data'));
-          }
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _syncControllerWithProvider(mushafProvider.currentPage);
+          });
           
           return Column(
             children: [
               Expanded(
                 child: PageView.builder(
-                  reverse: true, // RTL
-                  controller: PageController(
-                    initialPage: mushafProvider.currentPage - 1,
-                  ),
+                  reverse: true,
+                  controller: _pageController,
                   onPageChanged: (index) {
                     mushafProvider.goToPage(index + 1);
                   },
@@ -100,58 +108,52 @@ class _MushafPageContent extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final pageNum = index + 1;
                     
-                    // Each page loads its own data
-                    return Consumer<ColorProvider>(
-                      builder: (context, colorProvider, child) {
-                        return Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    return Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: paperColor,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withAlpha(25),
+                            blurRadius: 15,
+                            spreadRadius: 2,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Container(
+                        margin: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: borderColor, width: 2),
+                        ),
+                        child: Container(
+                          margin: const EdgeInsets.all(1.5),
                           decoration: BoxDecoration(
-                            color: paperColor,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withAlpha(25),
-                                blurRadius: 15,
-                                spreadRadius: 2,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
+                            border: Border.all(color: borderColor, width: 0.8),
                           ),
-                          // The classic geometric triple-border
                           child: Container(
-                            margin: const EdgeInsets.all(8),
+                            margin: const EdgeInsets.all(1.5),
                             decoration: BoxDecoration(
-                              border: Border.all(color: borderColor, width: 2.5),
+                              border: Border.all(color: borderColor, width: 0.8),
                             ),
-                            child: Container(
-                              margin: const EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: borderColor, width: 0.8),
-                              ),
-                              child: Container(
-                                margin: const EdgeInsets.all(2),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: borderColor, width: 0.8),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 4),
-                                  child: MushafPageView(
-                                    pageNumber: pageNum,
-                                    letterColors: colorProvider.letterColors,
-                                    font: colorProvider.selectedFont,
-                                    onWordTap: (word) {
-                                      _showLetterPicker(
-                                        context,
-                                        word,
-                                        colorProvider,
-                                      );
-                                    },
-                                  ),
-                                ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2),
+                              child: MushafPageView(
+                                pageNumber: pageNum,
+                                letterColors: colorProvider.letterColors,
+                                font: colorProvider.selectedFont,
+                                onWordTap: (word) {
+                                  _showLetterPicker(
+                                    context,
+                                    word,
+                                    colorProvider,
+                                  );
+                                },
                               ),
                             ),
                           ),
-                        );
-                      },
+                        ),
+                      ),
                     );
                   },
                 ),

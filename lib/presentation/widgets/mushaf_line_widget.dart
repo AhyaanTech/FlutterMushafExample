@@ -30,7 +30,7 @@ class MushafLineWidget extends StatelessWidget {
     
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: line.isCentered
@@ -43,7 +43,7 @@ class MushafLineWidget extends StatelessWidget {
   Widget _buildSurahHeader() {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 16),
+      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
       padding: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
         color: const Color(0xFFE8DFB3), // A soft golden/beige for the header
@@ -73,7 +73,7 @@ class MushafLineWidget extends StatelessWidget {
   Widget _buildBasmallah() {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -112,13 +112,16 @@ class MushafLineWidget extends StatelessWidget {
 
   Widget _buildJustifiedLine() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        ...line.words.map((word) => MushafWordWidget(
-          word: word,
-          letterColors: letterColors,
-          onTap: onWordTap != null ? () => onWordTap!(word) : null,
-          font: font,
+        ...line.words.map((word) => Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: MushafWordWidget(
+            word: word,
+            letterColors: letterColors,
+            onTap: onWordTap != null ? () => onWordTap!(word) : null,
+            font: font,
+          ),
         )),
       ],
     );
