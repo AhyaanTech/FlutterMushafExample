@@ -150,7 +150,6 @@ CREATE TABLE letter_breakdown (
     verse_key TEXT NOT NULL,          -- Denormalized
     word_position INTEGER NOT NULL,   -- Position within verse
     letter_index INTEGER NOT NULL,    -- Position within word (RTL, 0-based)
-    letter_position INTEGER NOT NULL, -- Same as letter_index
     base_letter TEXT NOT NULL,        -- Letter without diacritics
     letter_with_diacritics TEXT,      -- Full letter + tashkeel
     base_letter_codepoint INTEGER,    -- Unicode codepoint
@@ -172,15 +171,29 @@ CREATE TABLE letter_breakdown (
     has_hamza_below INTEGER DEFAULT 0,
     has_superscript_alef INTEGER DEFAULT 0,
     has_subscript_alef INTEGER DEFAULT 0,
-    has_small_high_alef INTEGER DEFAULT 0,
-    has_small_high_meem INTEGER DEFAULT 0,
+    has_small_high_sad_lam INTEGER DEFAULT 0,
+    has_small_high_qaf_lam INTEGER DEFAULT 0,
+    has_small_high_meem_initial INTEGER DEFAULT 0,
+    has_small_high_lam INTEGER DEFAULT 0,
     has_small_high_jeem INTEGER DEFAULT 0,
     has_small_high_three_dots INTEGER DEFAULT 0,
     has_small_high_seen INTEGER DEFAULT 0,
     has_small_high_rounded_zero INTEGER DEFAULT 0,
     has_small_high_upright_zero INTEGER DEFAULT 0,
     has_small_high_dotless_head INTEGER DEFAULT 0,
+    has_small_high_meem_isolated INTEGER DEFAULT 0,
+    has_small_low_seen INTEGER DEFAULT 0,
+    has_small_high_maddah INTEGER DEFAULT 0,
+    has_small_waw INTEGER DEFAULT 0,
+    has_small_yeh INTEGER DEFAULT 0,
+    has_small_high_noon INTEGER DEFAULT 0,
+    has_small_high_three_dots_alt INTEGER DEFAULT 0,
+    has_empty_centre_low_stop INTEGER DEFAULT 0,
+    has_empty_centre_high_stop INTEGER DEFAULT 0,
+    has_rounded_high_stop INTEGER DEFAULT 0,
     has_small_low_meem INTEGER DEFAULT 0,
+    -- Note: has_end_of_ayah, has_start_of_rub, has_place_of_sajdah removed
+    -- These are standalone markers (U+06DD, U+06DE, U+06E9), not diacritics
     
     letter_type TEXT,                 -- 'consonant' | 'vowel_carrier' | 'long_vowel'
     is_hamza_variant INTEGER DEFAULT 0,

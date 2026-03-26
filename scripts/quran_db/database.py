@@ -2,9 +2,7 @@
 """Database connection and utility functions."""
 
 import sqlite3
-import shutil
 from pathlib import Path
-from typing import Optional
 from contextlib import contextmanager
 
 from .config import DB_DIR, OUTPUT_DB, DB_TAJWEED
@@ -24,8 +22,12 @@ def validate_source_db(path: Path, name: str) -> None:
 @contextmanager
 def connect(db_path: Path, readonly: bool = False):
     """Context manager for database connections."""
-    uri = f"file:{db_path}" if readonly else str(db_path)
-    conn = sqlite3.connect(uri, uri=readonly)
+    if readonly:
+        # Use URI mode with read-only flag for actual read-only access
+        uri = f"file:{db_path.as_posix()}?mode=ro"
+        conn = sqlite3.connect(uri, uri=True)
+    else:
+        conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row
     try:
         yield conn
@@ -56,6 +58,7 @@ def init_output_db() -> None:
 def attach_source_databases(conn: sqlite3.Connection) -> None:
     """Attach source databases to connection."""
     from .config import DB_WORDS, DB_LAYOUT, DB_TAJWEED
+
     cursor = conn.cursor()
     cursor.execute(f"ATTACH DATABASE ? AS words_db", (str(DB_WORDS),))
     cursor.execute(f"ATTACH DATABASE ? AS layout_db", (str(DB_LAYOUT),))
